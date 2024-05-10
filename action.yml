@@ -1,5 +1,5 @@
-name: 'Install and open SSH server'
-description: 'Install and open SSH server through an intermediary server'
+name: 'SSH to Github Action Runner'
+description: 'Open SSH server in Github Action Runner using an intermediary server.'
 branding:
   icon: 'cast'
   color: 'purple'
