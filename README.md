@@ -1,6 +1,7 @@
 # Connect with open-sshd
 
-This GitHub Action sets up a SSH Server through a gateway.
+This GitHub Action opens an SSH connection to the github actions runner through an intermediary server.
+It is intended to debug jobs through SSH.
 
 ## Pre-requisites
 The gateway server has to be accessible from internet.
