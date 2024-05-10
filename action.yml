@@ -1,0 +1,81 @@
+name: 'Install and open SSHD server'
+description: 'Install and open SSHD server'
+inputs:
+  sshPublicKey:
+    description: 'The public key used to SSH to the runner.'
+    required: true
+  gatewayPrivateKey:
+    required: true
+  gatewayIP:
+    required: true
+  gatewayUser:
+    required: true
+  maxLifeTime:
+    required: false
+    default: 3600
+runs:
+    using: 'composite'
+    steps:
+      - name: Install requirements
+        shell: bash
+        id: download
+        run: |            
+            sudo apt update -qqqy
+            sudo apt install -qqqy openssh-server tmux
+      - name: Setup SSHD
+        shell: bash
+        id: setup
+        env:
+          GATEWAY_IP: ${{ inputs.gatewayIP }}
+        run: |
+          sudo systemctl enable ssh
+          sudo ufw allow from ${GATEWAY_IP}
+          sudo ufw enable
+          if [ -z "$(find /etc/ssh/ -name "ssh_host_*"|xargs echo -n)" ]; then DEBIAN_FRONTEND=noninteractive sudo -E dpkg-reconfigure openssh-server ;  fi
+          echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config
+          echo "ChallengeResponseAuthentication no" | sudo tee -a /etc/ssh/sshd_config
+          sudo sed -i "s/.*PasswordAuthentication.*/PasswordAuthentication no/g" /etc/ssh/sshd_config
+          sudo sed -i "s/.*Port.*/Port 2222/g" /etc/ssh/sshd_config
+          sudo systemctl daemon-reload
+          sudo systemctl restart ssh --now
+      - name: Install authorized key
+        shell: bash
+        id: keys
+        env:
+          SSH_PUBLIC_KEY: ${{ inputs.sshPublicKey }}
+        run: |
+          mkdir -p ~/.ssh
+          echo ${SSH_PUBLIC_KEY} > ~/.ssh/authorized_keys
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/authorized_keys
+      - name: How to connect
+        shell: bash
+        id: how-to-connect
+        run: echo from gateway server run- ssh -p 2222 $(whoami)@localhost          
+      - name: Open reverse ssh
+        shell: bash
+        id: reverse-ssh
+        env:
+          GATEWAY_PRIVATE_KEY: ${{ inputs.gatewayPrivateKey }}
+          GATEWAY_IP: ${{ inputs.gatewayIP }}
+          GATEWAY_USER: ${{ inputs.gatewayUser }}
+          MAX_LIFE_TIME: ${{ inputs.maxLifeTime }}
+        run: |
+          echo "$GATEWAY_PRIVATE_KEY" > temp_key.pem
+          sudo chmod 400 temp_key.pem
+          ssh -o StrictHostKeyChecking=no -i temp_key.pem -R 2222:localhost:2222 ${GATEWAY_USER}@${GATEWAY_IP} "sleep ${MAX_LIFE_TIME}" && rm -f temp_key.pem && tmux kill-session &
+
+          echo "#!/bin/bash" | sudo tee -a /usr/local/bin/unblock
+          echo "tmux kill-session" | sudo tee -a /usr/local/bin/unblock
+          
+          sudo chmod +x /usr/local/bin/unblock
+          
+          cat << EOF | sudo tee /etc/motd
+          A tmux session is running in the background, you can attach with 
+          "tmux attach". To stop this host, run "unblock" or "tmux kill-session".
+          EOF
+
+          tmux new-session -d -s debug
+          
+          # Blocks until someone has attached to the session and closed it
+          tmux wait-for channel
