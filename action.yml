@@ -1,5 +1,8 @@
-name: 'Install and open SSHD server'
-description: 'Install and open SSHD server'
+name: 'Install and open SSH server'
+description: 'Install and open SSH server through an intermediary server'
+branding:
+  icon: 'cast'
+  color: 'purple'
 inputs:
   sshPublicKey:
     description: 'The public key used to SSH to the runner.'
