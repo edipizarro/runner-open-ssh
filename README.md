@@ -34,7 +34,7 @@ First add the action to your workflow.
 - **port**: The port to use for SSH connection. Optional, defaults to 2222.
 
 After the job is run, the runner creates a proxy on the gateway on the specified port (defaults to 2222).
-So, to connect to the runner, first ssh to the gateway server, and from there run "ssh -p <port> runner@localhost" (where <port> is the port you configured, or 2222 if using the default).
+So, to connect to the runner, first ssh to the gateway server, and from there run "ssh -p &lt;port&gt; runner@localhost" (where &lt;port&gt; is the port you configured, or 2222 if using the default).
 
 The ssh proxy connection is run as a background process (using the ampersand &). And to keep the action alive a tmux terminal is attached.
 
