@@ -16,7 +16,7 @@ GatewayPorts yes
 First add the action to your workflow.
 ```yaml
   - name: Debug through SSH
-    uses: edipizarro/runner-open-ssh @main
+    uses: edipizarro/runner-open-ssh@main
     with:
       sshPublicKey: ${{ secrets.SSH_PUBLIC_KEY }}
       gatewayPrivateKey: ${{ secrets.GATEWAY_PRIVATE_KEY }}
